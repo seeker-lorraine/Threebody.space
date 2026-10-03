@@ -7,10 +7,22 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-const REPO = 'AyagawaSeirin/Threebody.space'
-const REPO_ID = 'R_kgDOUF3P5w'
+/**
+ * 留言写在站点自己的仓库里。
+ *
+ * 映射是 specific + strict：整站只对应一条 Discussion，键是固定的「留言板」，
+ * 与 URL、与路由模式都无关——所以单文件版那个 hash 路由也不会跑偏。
+ *
+ * 这条 Discussion 由 giscus 在有人首次评论时自动创建（实测如此，尽管设了 strict=1）；
+ * 创建之前 /api/discussions 返回 404，留言区是空的，属正常现象。
+ *
+ * 建好之后：不要删、不要改标题——标题一改 giscus 就找不到，404 会重现。
+ * 之后在 GitHub 上直接回复这条，页面同样会显示，反之亦然。
+ */
+const REPO = 'seeker-lorraine/Threebody.space'
+const REPO_ID = 'R_kgDOUwQwIg'
 const CATEGORY = 'General'
-const CATEGORY_ID = 'DIC_kwDOUF3P584DEg15'
+const CATEGORY_ID = 'DIC_kwDOUwQwIs4DG73g'
 
 const comments = ref<HTMLElement | null>(null)
 
@@ -49,7 +61,7 @@ onBeforeUnmount(() => {
       <p class="fine">
         留言区需要 JavaScript。也可以直接前往
         <a
-          href="https://github.com/AyagawaSeirin/Threebody.space/discussions"
+          href="https://github.com/seeker-lorraine/Threebody.space/discussions"
           rel="noopener noreferrer"
           target="_blank"
         >

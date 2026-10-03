@@ -4,16 +4,21 @@
  * 版权说明必须写清楚：本站是粉丝二创，非官方；著作权归属。
  * 书摘出处在 /about 里交代（含仓库链接与清洗说明），这里不再重复一遍。
  */
-const OWNER_URL = 'https://seir.in'
-const REPO_URL = 'https://github.com/AyagawaSeirin/Threebody.space'
+/** 站点与书摘数据的原作者。署名不因换维护者而消失 */
+const ORIGINAL_AUTHOR_URL = 'https://seir.in'
+/** 现在的维护者 */
+const OWNER_URL = 'https://homepage.seeker-lorraine.cn'
+const REPO_URL = 'https://github.com/seeker-lorraine/Threebody.space'
 </script>
 
 <template>
   <footer class="foot">
     <div class="wrap">
       <p class="fine foot__line">
-        Threebody.space · 站主
-        <a :href="OWNER_URL" rel="noopener noreferrer" target="_blank">綾川星凛</a>
+        Threebody.space · 原作者
+        <a :href="ORIGINAL_AUTHOR_URL" rel="noopener noreferrer" target="_blank">綾川星凛</a>
+        · 站主
+        <a :href="OWNER_URL" rel="noopener noreferrer" target="_blank">seeker-lorraine</a>
         · 本站为粉丝二创，非官方 ·
         <RouterLink to="/guestbook">留言</RouterLink>
         ·

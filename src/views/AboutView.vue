@@ -2,6 +2,14 @@
 /** /about —— 这个站是什么、数据从哪来、版权怎么算。 */
 import { SENTENCE_SOURCE } from '@/content/sentences'
 import { RATING_SOURCE } from '@/content/works'
+
+/**
+ * 站点本身（代码、文案、图像）和那 423 条书摘都是原作者做的。
+ * 换站主不能把原作者的署名盖掉，所以两个都写，原作者在前。
+ */
+const ORIGINAL_AUTHOR = { name: '綾川星凛', url: 'https://seir.in' }
+/** 现在的维护者 */
+const MAINTAINER = { name: 'seeker-lorraine', url: 'https://homepage.seeker-lorraine.cn' }
 </script>
 
 <template>
@@ -10,17 +18,26 @@ import { RATING_SOURCE } from '@/content/works'
 
     <div class="prose measure about__body">
       <p class="body">
-        Threebody.space 是一个粉丝站。站主读《三体》，也看《我的三体》系列动画，
-        做这个站是想把这套书的世界观从头讲一遍，顺便把这些年抄下来的句子放在一个地方。
+        Threebody.space 是一个粉丝站，由原作者
+        <a :href="ORIGINAL_AUTHOR.url" rel="noopener noreferrer" target="_blank">
+          {{ ORIGINAL_AUTHOR.name }}
+        </a>
+        搭建，而本站是在原作者的项目基础上，由
+        <a :href="MAINTAINER.url" rel="noopener noreferrer" target="_blank">
+          {{ MAINTAINER.name }}
+        </a>
+        自部署和维护。这个站把书里的世界观按发生顺序讲了一遍：从红岸发出去的那段信号，
+        到太阳系被降成二维；中间穿过一条对数尺子，从一米一路量到可观测宇宙。
+        顺带把这些年抄下来的句子，和《我的三体》这十年放在一起。
       </p>
       <p class="body">
-        站内正文包含全书关键情节：黑暗森林法则、水滴、二向箔、程心的两次选择都会讲到。
-        没读过书又不想被剧透的话，这里不适合先看。
+        站内正文包含全书关键情节：黑暗森林法则、水滴、二向箔、程心的两次选择都会讲到，
+        结局也在最后一节。没读过书又不想被剧透的话，这里不适合先看。
       </p>
 
       <h2 class="about__h2">数据</h2>
       <p class="body">
-        书摘共 423 条，整理自站主自己的仓库
+        书摘共 423 条，整理自原作者的仓库
         <a :href="SENTENCE_SOURCE" rel="noopener noreferrer" target="_blank">
           AyagawaSeirin/ThreebodySpace
         </a>
@@ -48,7 +65,7 @@ import { RATING_SOURCE } from '@/content/works'
 
       <h2 class="about__h2">版权</h2>
       <p class="body">
-        本站为粉丝二创，非官方。《三体》著作权归刘慈欣；
+        本站为粉丝二创，非官方，感谢原作者提供的项目源码。《三体》著作权归刘慈欣；
         《我的三体》系列相关权利归其权利人。本站不托管、不内嵌任何影片，
         动画只提供官方平台外链。侵权或勘误请联系站主。
       </p>

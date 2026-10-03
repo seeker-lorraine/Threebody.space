@@ -3,8 +3,9 @@
 // 而不是被打进首屏 bundle。dev 与 build 前自动执行。
 import { copyFileSync, mkdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const src = resolve(ROOT, 'src/content/sentences.json')
 const out = resolve(ROOT, 'public/data/sentences.json')
 

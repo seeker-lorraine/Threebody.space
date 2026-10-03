@@ -4,8 +4,9 @@
 // 源数据是一个纯字符串数组，本脚本只做「规整」，不添加任何原始数据里没有的信息。
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..')
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = 'https://raw.githubusercontent.com/AyagawaSeirin/ThreebodySpace/refs/heads/master/sentence/sentence.json'
 const CACHE = resolve(ROOT, '.cache/sentence.raw.json')
 const OUT = resolve(ROOT, 'src/content/sentences.json')

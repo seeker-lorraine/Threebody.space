@@ -2,7 +2,7 @@
 /** 4.9 结尾。mini-universe 收尾：从最大尺度回到一间小屋、一株芽。 */
 import Plate from './Plate.vue'
 import RevealBlock from './RevealBlock.vue'
-import { ENDING } from '@/content/concepts'
+import { ENDING, SECTION_READOUT } from '@/content/concepts'
 </script>
 
 <template>
@@ -14,6 +14,8 @@ import { ENDING } from '@/content/concepts'
         </div>
 
         <div class="end__text">
+          <RevealBlock as="p" class="readout">{{ SECTION_READOUT.ending }}</RevealBlock>
+
           <RevealBlock as="h2" slow class="display end__title">
             <span id="end-title">{{ ENDING.title }}</span>
           </RevealBlock>

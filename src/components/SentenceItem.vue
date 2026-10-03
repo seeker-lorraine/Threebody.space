@@ -68,6 +68,12 @@ const segmented = computed<Segment[][]>(() => {
       </p>
     </blockquote>
 
+    <!--
+      编号用数据本身的 id（s001…s423），不是另编的序号。
+      放在正文之后：那条 1px 竖线是按正文首行定位的，不能在它前面插东西。
+    -->
+    <p class="readout quote__no">{{ sentence.id }}</p>
+
     <!-- 只有 28 条有署名；其余 395 条这里什么都不出现。 -->
     <p v-if="sentence.attribution" class="fine quote__by">—— {{ sentence.attribution }}</p>
   </article>
@@ -137,6 +143,10 @@ const segmented = computed<Segment[][]>(() => {
   background: none;
   color: var(--ink-0);
   font-weight: 700;
+}
+
+.quote__no {
+  margin: var(--s-3) 0 0;
 }
 
 .quote__by {

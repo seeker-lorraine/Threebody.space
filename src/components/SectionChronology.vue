@@ -8,10 +8,13 @@
  */
 import RevealBlock from './RevealBlock.vue'
 import { CHRONOLOGY, CHRONOLOGY_NOTE } from '@/content/chronology'
+import { SECTION_READOUT } from '@/content/concepts'
 </script>
 
 <template>
   <section class="section wrap chron" aria-labelledby="chron-title">
+    <RevealBlock as="p" class="readout">{{ SECTION_READOUT.chronology }}</RevealBlock>
+
     <RevealBlock as="h2" class="title">
       <span id="chron-title">顺序</span>
     </RevealBlock>

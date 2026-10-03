@@ -11,7 +11,7 @@ import Plate from './Plate.vue'
 import RevealBlock from './RevealBlock.vue'
 import { useScrollProgress } from '@/composables/useScrollProgress'
 import { useReducedMotion } from '@/composables/useReducedMotion'
-import { DIMENSION, DROPLET } from '@/content/concepts'
+import { DIMENSION, DROPLET, SECTION_READOUT } from '@/content/concepts'
 
 const { el, progress } = useScrollProgress()
 const reduced = useReducedMotion()
@@ -27,6 +27,8 @@ const scale = computed(() => {
 <template>
   <section class="drop" aria-labelledby="drop-title">
     <div class="section wrap">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.droplet }}</RevealBlock>
+
       <RevealBlock as="h2" class="title">
         <span id="drop-title">{{ DROPLET.title }}</span>
       </RevealBlock>
@@ -46,6 +48,8 @@ const scale = computed(() => {
 
     <!-- 两张图之间大留白：--s-6 上下各一次 -->
     <div class="section wrap dim">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.dimension }}</RevealBlock>
+
       <RevealBlock as="h2" class="title">
         <span id="dim-title">{{ DIMENSION.title }}</span>
       </RevealBlock>

@@ -3,11 +3,13 @@
 import { RouterLink } from 'vue-router'
 import RevealBlock from './RevealBlock.vue'
 import RandomSentence from './RandomSentence.vue'
-import { SENTENCES_SECTION } from '@/content/concepts'
+import { SECTION_READOUT, SENTENCES_SECTION } from '@/content/concepts'
 </script>
 
 <template>
   <section class="section wrap sent" aria-labelledby="sent-title">
+    <RevealBlock as="p" class="readout">{{ SECTION_READOUT.sentences }}</RevealBlock>
+
     <RevealBlock as="h2" class="title">
       <span id="sent-title">{{ SENTENCES_SECTION.title }}</span>
     </RevealBlock>

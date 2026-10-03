@@ -10,7 +10,7 @@ import Plate from './Plate.vue'
 import RevealBlock from './RevealBlock.vue'
 import { useReveal } from '@/composables/useReveal'
 import { useCoverBox } from '@/composables/useCoverBox'
-import { DARK_FOREST } from '@/content/concepts'
+import { DARK_FOREST, SECTION_READOUT } from '@/content/concepts'
 
 const { el, shown } = useReveal({ threshold: 0.35 })
 
@@ -36,6 +36,8 @@ const needle = computed(() => ({ ...needlePos.value, height: needleHeight.value 
     </figure>
 
     <div class="section wrap">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.darkForest }}</RevealBlock>
+
       <RevealBlock as="h2" class="title">
         <span id="forest-title">{{ DARK_FOREST.title }}</span>
       </RevealBlock>

@@ -18,6 +18,7 @@ import {
   DT,
   ESCAPE_R,
   accelerate,
+  energy,
   escaped,
   pushTrail,
   recenter,
@@ -62,16 +63,27 @@ const rounds = ref(1)
 const fading = ref(false)
 /** 暂停：只停积分，不清画面 */
 const paused = ref(false)
+/** 能量漂移：本局总能量相对开局的变化率。真算出来的遥测，不是装饰数字 */
+const drift = ref(0)
+
+/** 开局的总能量（取绝对值），漂移以它为基准 */
+let e0 = 0
+let ticks = 0
 
 let bodies: Body[] = seedBodies(CHAOS_SEEDS[seedIndex.value]!)
 let frame = 0
 let switching = false
+/** 换局那个 setTimeout 的句柄：卸载时要清掉，否则回调会打到已卸载的实例上 */
+let switchTimer = 0
 
 function loadRound(index: number) {
   seedIndex.value = index
   bodies = seedBodies(CHAOS_SEEDS[index]!)
   accelerate(bodies)
   elapsed.value = 0
+  e0 = Math.abs(energy(bodies))
+  drift.value = 0
+  ticks = 0
 }
 
 /** 重新开始：换一组初值，不重复当前这一局 */
@@ -89,8 +101,9 @@ function autoNext() {
   if (switching) return
   switching = true
   fading.value = true
-  window.setTimeout(() => {
+  switchTimer = window.setTimeout(() => {
     restart()
+    switchTimer = 0
   }, 360)
 }
 
@@ -160,6 +173,10 @@ function tick() {
     recenter(bodies)
     pushTrail(bodies, TRAIL_MAX)
     elapsed.value += stepsPerFrame.value * DT
+    // 每 30 帧读一次能量：它是真遥测，但每帧都写 ref 会让面板每帧重渲染一遍
+    if (++ticks % 30 === 0 && e0) {
+      drift.value = Math.abs(Math.abs(energy(bodies)) - e0) / e0
+    }
     if (escaped(bodies)) autoNext()
   }
   draw(ctx)
@@ -175,6 +192,7 @@ function still() {
   }
   recenter(bodies)
   elapsed.value = 20000 * DT
+  if (e0) drift.value = Math.abs(Math.abs(energy(bodies)) - e0) / e0
   draw(ctx)
 }
 
@@ -200,12 +218,15 @@ onMounted(() => {
   window.addEventListener('resize', resize, { passive: true })
   window.addEventListener('keydown', onKeydown)
   accelerate(bodies)
+  e0 = Math.abs(energy(bodies))
   if (reduced.value) still()
   else frame = requestAnimationFrame(tick)
 })
 
 onBeforeUnmount(() => {
   if (frame) cancelAnimationFrame(frame)
+  // 质点逃逸后 360ms 内离开这一页的话，换局回调必须取消
+  if (switchTimer) window.clearTimeout(switchTimer)
   window.removeEventListener('resize', resize)
   window.removeEventListener('keydown', onKeydown)
 })
@@ -260,7 +281,8 @@ onBeforeUnmount(() => {
       <p class="fine sim__readout" aria-live="off">
         第 <span class="data">{{ rounds }}</span> 局 ·
         已跑 <span class="data">{{ elapsed.toFixed(0) }}</span> 个时间单位 ·
-        逃逸半径 <span class="data">{{ ESCAPE_R }}</span>
+        逃逸半径 <span class="data">{{ ESCAPE_R }}</span> ·
+        能量漂移 <span class="data">{{ drift.toExponential(1) }}</span>
       </p>
       <p class="fine sim__keys">R 重新开始 · 空格 暂停 · 方向键 调速</p>
       <p class="fine sim__back">
@@ -369,6 +391,12 @@ onBeforeUnmount(() => {
   /* 不叠 opacity：--ink-1 本身只有 6.06:1，乘 0.8 就掉到 4.1:1，
      14px 正文不到 4.5:1。层级靠位置和措辞给，不靠压透明度。 */
   color: var(--ink-1);
+}
+
+/* 读出行里的数字是真数据，用数据色（5.20:1，仍过 4.5 这条线）。
+   速度档位是 UI 标签不是数据，保持原来的颜色。 */
+.sim__readout .data {
+  color: var(--data);
 }
 
 @media (max-width: 720px) {

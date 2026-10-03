@@ -48,6 +48,23 @@
   font-feature-settings: "tnum" 1;
 }
 
+/*
+  读数行：章节序号、量级、坐标、纪元这类「仪器输出」的排版。
+  它是 .data 加上数据色与字距——之所以整份重写而不是只加一个颜色类，
+  是因为少写一个 .data 就会得到一行黑体的彩色字，那正是 #34 要挡的东西。
+*/
+.readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: var(--t-fine);
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--data);
+  /* 读数总是贴在它所属那一块的上沿，与下方内容隔 16 */
+  margin: 0 0 var(--s-3);
+}
+
 .measure {
   max-width: var(--measure);
 }

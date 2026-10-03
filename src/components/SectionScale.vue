@@ -2,11 +2,13 @@
 /** 4.6 尺度。纯排版，不配图。 */
 import RevealBlock from './RevealBlock.vue'
 import ScaleRuler from './ScaleRuler.vue'
-import { SCALE_SECTION } from '@/content/concepts'
+import { SCALE_SECTION, SECTION_READOUT } from '@/content/concepts'
 </script>
 
 <template>
   <section class="section wrap scale" aria-labelledby="scale-title">
+    <RevealBlock as="p" class="readout">{{ SECTION_READOUT.scale }}</RevealBlock>
+
     <RevealBlock as="h2" class="title">
       <span id="scale-title">{{ SCALE_SECTION.title }}</span>
     </RevealBlock>

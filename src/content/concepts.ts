@@ -3,6 +3,88 @@
  * 不写「一次改变人类命运的呼唤」。
  */
 
+import { CHRONOLOGY } from './chronology'
+
+/**
+ * 纪年文字与公元年份一律从年表取，不在这里另写一份：
+ * 年表的换算基准（危机纪元元年 = 公元 2007）一改，这里的数字跟着变。
+ * 公元年份都是推算值，所以一律带 ≈，依据见 chronology.ts 的 CHRONOLOGY_NOTE。
+ */
+function findEra(stamp: string) {
+  return CHRONOLOGY.find((e) => e.stamp === stamp)
+}
+
+/**
+ * «危机纪元 205 · ≈2211»：纪年锚点 + 推算的公元年。
+ * 纪年本身就是「这是书里的时间」最强的标记——比任何前缀都直接，
+ * 而且和年表的主列口径完全一致。
+ */
+function era(stamp: string): string {
+  const hit = findEra(stamp)
+  if (!hit || hit.gregorian == null) return ''
+  return `${hit.stamp} · ≈${hit.gregorian}`
+}
+
+/**
+ * «危机纪元 3—208 · ≈2009—2214»：同一纪元内的一段。
+ * 原著没给单独一年的章节给区间，不硬挑一个点充数。
+ */
+function eraSpan(eraName: string, from: number, to: number): string {
+  const a = findEra(`${eraName} ${from}`)
+  const b = findEra(`${eraName} ${to}`)
+  if (!a || !b || a.gregorian == null || b.gregorian == null) return ''
+  return `${eraName} ${from}—${to} · ≈${a.gregorian}—${b.gregorian}`
+}
+
+/**
+ * 黑暗森林：从面壁计划启动到威慑建立，罗辑这条线的两端。
+ * 法则是在这个区间里被想明白的，原著没给单独一年。
+ */
+const forestEra = eraSpan('危机纪元', 3, 208)
+/** 水滴：末日之战 */
+const dropletEra = era('危机纪元 205')
+/** 二向箔：太阳系二维化 */
+const dimensionEra = era('掩体纪元 67')
+/** 年表那一节的跨度终点：整张时间轴的最后一年 */
+const lastEraYear = findEra('掩体纪元 67')?.gregorian
+
+/**
+ * 各章的读数行：序号 · 这一章的一个量 · 它发生的年份。
+ *
+ * 序号是它在首页长滚动里的位置（开场不算段落，所以是 9 段）。
+ *
+ * 时间有两套，必须一眼能分开：
+ *   原著时间 —— 带纪年锚点（危机纪元 205），公元年一律带 ≈（是推算的）。
+ *               这是默认的一套，不额外标注。
+ *   现实时间 —— 只有《我的三体》一节是，显式写「现实」。
+ * 不用颜色区分这两套：--data 的意思是「这是真数据」，而两套时间都是真数据。
+ *
+ * 数字全部来自站内已有的内容或可查证的量，没有一个是为排版编出来的：
+ *   4.22 ly —— scales.ts 的比邻星锚点
+ *   3.5 m   —— DROPLET.paragraphs「三米半长」
+ *   1 m → 9.3e10 ly —— scales.ts 的尺子定义域两端
+ *   423 条 —— sentences.json 的 stats.total
+ *   2014 — 2024 —— works.ts 四季的首尾
+ *   5 kg  —— ENDING.paragraphs「只留下五公斤」
+ * 水滴与二向箔同属第 4 段，所以两条都写 04。
+ *
+ * 有四章不带年份，因为它们本来就没有：
+ * 三体世界讲的是那颗行星自己的两百多次轮回，原著不给公元年；
+ * 尺度讲的是空间不是时间；书摘横跨全书；结尾的小宇宙在时间之外。
+ */
+export const SECTION_READOUT = {
+  redCoast: '01 / 09 · 1971',
+  trisolaris: '02 / 09 · 4.22 ly',
+  darkForest: `03 / 09 · 公理 ×2${forestEra ? ` · ${forestEra}` : ''}`,
+  droplet: `04 / 09 · 3.5 m${dropletEra ? ` · ${dropletEra}` : ''}`,
+  dimension: `04 / 09 · 3D → 2D${dimensionEra ? ` · ${dimensionEra}` : ''}`,
+  chronology: `05 / 09 · 1971 — ${lastEraYear != null ? `≈${lastEraYear}` : '≈2401'}`,
+  scale: '06 / 09 · 1 m → 9.3e10 ly',
+  sentences: '07 / 09 · 423 条',
+  works: '08 / 09 · 现实 · 2014 — 2024',
+  ending: '09 / 09 · 5 kg',
+} as const
+
 export interface Plate {
   /** public/images 下的文件名（不含扩展名） */
   name: string
@@ -138,7 +220,7 @@ export const SCALE_SECTION = {
 
 export const SENTENCES_SECTION = {
   title: '书摘',
-  intro: '站主从书里抄下来的句子，一共 423 条。',
+  intro: '原作者从书里抄下来的句子，一共 423 条。',
   linkText: '读全部 423 条',
 }
 
@@ -159,7 +241,7 @@ export const ENDING = {
 
 export const WORKS_SECTION = {
   title: '我的三体',
-  intro: '站主是这个系列的粉丝。十年，四季，从《我的世界》里的方块人开始。',
+  intro: '原作者是这个系列的粉丝。十年，四季，从《我的世界》里的方块人开始。',
   plate: {
     name: 'voxel-tribute',
     alt: '由大块方体搭成的飞船走廊向暗处延伸，远端一条冷白色灯带，风格是体素方块。',

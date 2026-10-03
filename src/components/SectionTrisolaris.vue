@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import Plate from './Plate.vue'
 import RevealBlock from './RevealBlock.vue'
 import ThreeBodyCanvas from './ThreeBodyCanvas.vue'
-import { TRISOLARIS } from '@/content/concepts'
+import { SECTION_READOUT, TRISOLARIS } from '@/content/concepts'
 </script>
 
 <template>
@@ -14,6 +14,8 @@ import { TRISOLARIS } from '@/content/concepts'
     </div>
 
     <div class="section wrap">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.trisolaris }}</RevealBlock>
+
       <RevealBlock as="h2" class="title" >
         <span id="tri-title">{{ TRISOLARIS.title }}</span>
       </RevealBlock>

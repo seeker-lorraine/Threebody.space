@@ -10,7 +10,7 @@
 import Plate from './Plate.vue'
 import RevealBlock from './RevealBlock.vue'
 import { useCoverBox } from '@/composables/useCoverBox'
-import { RED_COAST } from '@/content/concepts'
+import { RED_COAST, SECTION_READOUT } from '@/content/concepts'
 
 // 红灯在素材里的位置由像素实测得出：红色像素簇质心在 72.47% / 36.53%。
 // 图片被 cover 裁过，所以要把图片坐标换算成容器坐标。
@@ -27,6 +27,8 @@ const lamp = at(72.47, 36.53)
     </figure>
 
     <div class="section wrap coast__body">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.redCoast }}</RevealBlock>
+
       <RevealBlock as="div">
         <p class="data coast__year">{{ RED_COAST.year }}</p>
         <h2 id="coast-title" class="title coast__title">{{ RED_COAST.title }}</h2>

@@ -59,10 +59,15 @@ const routes: RouteRecordRaw[] = [
 export const router = createRouter({
   history: useHash ? createWebHashHistory() : createWebHistory(import.meta.env.BASE_URL),
   routes,
+  /**
+   * html 上开了全局 scroll-behavior: smooth（页内锚点靠它），
+   * 但换路由时的滚动必须走 instant：从书摘第 300 条点导航回首页，
+   * 平滑滚几千像素要滚好几秒。页内锚点仍然保留平滑。
+   */
   scrollBehavior(to, _from, saved) {
-    if (saved) return saved
+    if (saved) return { ...saved, behavior: 'auto' }
     if (to.hash) return { el: to.hash }
-    return { top: 0 }
+    return { top: 0, behavior: 'auto' }
   },
 })
 

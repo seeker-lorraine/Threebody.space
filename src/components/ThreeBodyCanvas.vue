@@ -23,6 +23,16 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { prefersReducedMotion } from '@/composables/useReducedMotion'
+import {
+  CHAOS_SEEDS,
+  DT,
+  accelerate,
+  escaped,
+  pushTrail,
+  recenter,
+  seedBodies,
+  step,
+} from '@/lib/threebody'
 
 const props = withDefaults(defineProps<{ size?: number }>(), { size: 480 })
 
@@ -31,26 +41,13 @@ const holder = ref<HTMLElement | null>(null)
 /** 换局时的淡出淡入：只动 opacity，320ms，标准缓动 */
 const fading = ref(false)
 
-interface Body {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  ax: number
-  ay: number
-  m: number
-  trail: number[]
-}
-
-const G = 1
-// 软化半径：混沌构型必然出现近距交会（实测最小间距 ~0.016），
-// 不软化的话步长撑不住，能量会在交会时爆掉。0.15 下最坏漂移 6.5e-4。
-const SOFT2 = 0.15 * 0.15
-const DT = 0.002
+/**
+ * 这里只留呈现参数。积分器、种子池、逃逸判据一律取自 @/lib/threebody，
+ * 和 /simulation 满屏页是同一份——两处各写一遍迟早会走偏成两种物理。
+ */
 const STEPS_PER_FRAME = 12
+/** 拖尾点数。页内画布只有 480px，比满屏页的 1400 短 */
 const TRAIL_MAX = 620
-/** 离质心超过这个距离视为逃逸，本局结束 */
-const ESCAPE_R = 2.6
 /**
  * 取景半宽。故意比逃逸半径小：大部分时间三个质点都在 ±1.5 以内缠斗，
  * 按逃逸半径取景的话画面四周常年一圈空黑。取紧一点，
@@ -58,145 +55,24 @@ const ESCAPE_R = 2.6
  */
 const VIEW_R = 1.9
 
-const MASSES = [1.05, 1, 0.95]
-
-/**
- * 种子池。每个数喂给 mulberry32 生成一个「从静止释放的不规则三角形」。
- * 用数值试验筛过：这些局都能撑 40–160 个时间单位（约半分钟到两分钟）才逃逸，
- * 期间活动范围不出画面。见仓库脚本的筛选过程。
- */
-const CHAOS_SEEDS = [
-  2, 6, 10, 12, 15, 16, 19, 20, 26, 30, 32, 36,
-  38, 42, 43, 47, 48, 53, 55, 59, 62, 69, 72, 73,
-]
-
-/** mulberry32：确定性随机数，同一个种子永远给出同一局 */
-function rng(seed: number) {
-  let a = seed >>> 0
-  return () => {
-    a |= 0
-    a = (a + 0x6d2b79f5) | 0
-    let t = Math.imul(a ^ (a >>> 15), 1 | a)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-function seedBodies(seedId: number): Body[] {
-  const rand = rng(seedId)
-  const bs: Body[] = MASSES.map((m) => ({
-    x: (rand() - 0.5) * 2.2,
-    y: (rand() - 0.5) * 2.2,
-    vx: 0,
-    vy: 0,
-    ax: 0,
-    ay: 0,
-    m,
-    trail: [],
-  }))
-  recenter(bs)
-  // 归一化：最远质点距质心恰为 1，每局开场大小一致
-  const r = Math.max(...bs.map((b) => Math.hypot(b.x, b.y)))
-  for (const b of bs) {
-    b.x /= r
-    b.y /= r
-  }
-  return bs
-}
-
 let seedIndex = Math.floor(Math.random() * CHAOS_SEEDS.length)
 let bodies = seedBodies(CHAOS_SEEDS[seedIndex]!)
 let frame = 0
 let running = false
 let switching = false
+/** 换局那个 setTimeout 的句柄：卸载时必须清掉，否则回调会打到已销毁的实例上 */
+let switchTimer = 0
+/** 画布是否在视口内。切后台时主动停，回来再照这个状态恢复 */
+let inView = false
 let observer: IntersectionObserver | null = null
-
-function accelerate(bs: Body[]) {
-  for (const b of bs) {
-    b.ax = 0
-    b.ay = 0
-  }
-  for (let i = 0; i < bs.length; i++) {
-    for (let j = i + 1; j < bs.length; j++) {
-      const a = bs[i]!
-      const b = bs[j]!
-      const dx = b.x - a.x
-      const dy = b.y - a.y
-      const d2 = dx * dx + dy * dy + SOFT2
-      const inv = 1 / (d2 * Math.sqrt(d2))
-      const fx = G * dx * inv
-      const fy = G * dy * inv
-      a.ax += fx * b.m
-      a.ay += fy * b.m
-      b.ax -= fx * a.m
-      b.ay -= fy * a.m
-    }
-  }
-}
-
-// 速度 Verlet：半步速度 → 整步位置 → 重算加速度 → 补半步速度
-function step(bs: Body[], dt: number) {
-  for (const b of bs) {
-    b.vx += 0.5 * b.ax * dt
-    b.vy += 0.5 * b.ay * dt
-    b.x += b.vx * dt
-    b.y += b.vy * dt
-  }
-  accelerate(bs)
-  for (const b of bs) {
-    b.vx += 0.5 * b.ax * dt
-    b.vy += 0.5 * b.ay * dt
-  }
-}
-
-// 质心漂移会把系统慢慢移出画面：每帧减掉总动量，纯粹是取景，不改物理
-function recenter(bs: Body[]) {
-  let mx = 0
-  let my = 0
-  let mvx = 0
-  let mvy = 0
-  let mass = 0
-  for (const b of bs) {
-    mx += b.x * b.m
-    my += b.y * b.m
-    mvx += b.vx * b.m
-    mvy += b.vy * b.m
-    mass += b.m
-  }
-  mx /= mass
-  my /= mass
-  mvx /= mass
-  mvy /= mass
-  for (const b of bs) {
-    b.x -= mx
-    b.y -= my
-    b.vx -= mvx
-    b.vy -= mvy
-    for (let i = 0; i < b.trail.length; i += 2) {
-      b.trail[i]! -= mx
-      b.trail[i + 1]! -= my
-    }
-  }
-}
-
-function pushTrail(bs: Body[]) {
-  for (const b of bs) {
-    b.trail.push(b.x, b.y)
-    if (b.trail.length > TRAIL_MAX * 2) b.trail.splice(0, 2)
-  }
-}
-
-/** 有质点跑出逃逸半径就说明本局结束了 */
-function escaped(bs: Body[]): boolean {
-  return bs.some((b) => Math.hypot(b.x, b.y) > ESCAPE_R)
-}
+let resizeObserver: ResizeObserver | null = null
 
 /** 换局：画面淡出 → 换一组初值 → 淡入。只动 opacity。 */
 function nextRound() {
   if (switching) return
   switching = true
   fading.value = true
-  window.setTimeout(() => {
+  switchTimer = window.setTimeout(() => {
     // 不重复上一局；顺序取也行，随机跳着取更不容易看出池子的存在
     let next = Math.floor(Math.random() * CHAOS_SEEDS.length)
     if (next === seedIndex) next = (next + 1) % CHAOS_SEEDS.length
@@ -205,6 +81,7 @@ function nextRound() {
     accelerate(bodies)
     fading.value = false
     switching = false
+    switchTimer = 0
   }, 360)
 }
 
@@ -250,18 +127,33 @@ let cssW = props.size
 let cssH = props.size
 let dpr = 1
 
+/** 按当前容器宽度与 DPR 重建画布。返回尺寸是否真的变了 */
 function setup() {
   const el = canvas.value
-  if (!el) return
-  dpr = Math.min(window.devicePixelRatio || 1, 2)
-  cssW = Math.min(props.size, el.parentElement?.clientWidth || props.size)
+  if (!el) return false
+  const nextDpr = Math.min(window.devicePixelRatio || 1, 2)
   // 混沌构型的活动范围是各向同性的（不是 8 字那种扁长条），方形取景
-  cssH = cssW
+  const nextW = Math.round(Math.min(props.size, el.parentElement?.clientWidth || props.size))
+  if (nextW === cssW && nextDpr === dpr && ctx) return false
+
+  dpr = nextDpr
+  cssW = nextW
+  cssH = nextW
   el.width = Math.round(cssW * dpr)
   el.height = Math.round(cssH * dpr)
   el.style.width = `${cssW}px`
   el.style.height = `${cssH}px`
   ctx = el.getContext('2d')
+  return true
+}
+
+/**
+ * 容器宽度变了（转屏、拖窗口）或 DPR 变了（把窗口拖到另一块屏）都要重建画布：
+ * 否则画布只是被 CSS 拉伸，1px 的线会发虚，轨迹也不再对应真实坐标。
+ */
+function onResize() {
+  if (!setup()) return
+  if (ctx) draw(ctx, cssW, cssH, dpr)
 }
 
 function tick() {
@@ -269,7 +161,7 @@ function tick() {
   if (!switching) {
     for (let i = 0; i < STEPS_PER_FRAME; i++) step(bodies, DT)
     recenter(bodies)
-    pushTrail(bodies)
+    pushTrail(bodies, TRAIL_MAX)
     if (escaped(bodies)) nextRound()
   }
   draw(ctx, cssW, cssH, dpr)
@@ -288,12 +180,18 @@ function stop() {
   frame = 0
 }
 
+/** 切到后台就停：rAF 反正会被浏览器节流，没必要让它继续排队 */
+function onVisibility() {
+  if (document.hidden) stop()
+  else if (inView) start()
+}
+
 /** 静态一帧：先积分一段，画出已经走乱的轨迹，然后停手 */
 function still() {
   if (!ctx) return
   for (let n = 0; n < 9000; n++) {
     step(bodies, DT)
-    if (n % 12 === 0) pushTrail(bodies)
+    if (n % 12 === 0) pushTrail(bodies, TRAIL_MAX)
   }
   recenter(bodies)
   draw(ctx, cssW, cssH, dpr)
@@ -304,6 +202,14 @@ onMounted(() => {
   if (!ctx) return
   accelerate(bodies)
 
+  // 尺寸/DPR 的监听先挂：减弱动态效果那条分支同样要能重画
+  if (typeof ResizeObserver !== 'undefined' && holder.value) {
+    resizeObserver = new ResizeObserver(onResize)
+    resizeObserver.observe(holder.value)
+  }
+  // ResizeObserver 抓不到「DPR 变了但 CSS 尺寸没变」——把窗口拖到另一块屏
+  window.addEventListener('resize', onResize, { passive: true })
+
   if (prefersReducedMotion()) {
     still()
     return
@@ -313,18 +219,25 @@ onMounted(() => {
   observer = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
-        if (e.isIntersecting) start()
+        inView = e.isIntersecting
+        if (inView) start()
         else stop()
       }
     },
     { threshold: 0.05 },
   )
   if (holder.value) observer.observe(holder.value)
+  document.addEventListener('visibilitychange', onVisibility)
 })
 
 onBeforeUnmount(() => {
   stop()
+  if (switchTimer) window.clearTimeout(switchTimer)
+  switchTimer = 0
   observer?.disconnect()
+  resizeObserver?.disconnect()
+  window.removeEventListener('resize', onResize)
+  document.removeEventListener('visibilitychange', onVisibility)
 })
 </script>
 

@@ -13,7 +13,13 @@ import {
   RATING_SOURCE,
   SEASONS,
 } from '@/content/works'
-import { WORKS_SECTION } from '@/content/concepts'
+import { SECTION_READOUT, WORKS_SECTION } from '@/content/concepts'
+
+/**
+ * 标题层级由页面决定：首页的开场标题已经是 h1，这一段是 h2；
+ * /works 整页就是这一段，所以那一页里它是 h1——否则那一页没有 h1，大纲从 h2 起跳。
+ */
+withDefaults(defineProps<{ heading?: 'h1' | 'h2' }>(), { heading: 'h2' })
 </script>
 
 <template>
@@ -23,7 +29,9 @@ import { WORKS_SECTION } from '@/content/concepts'
     </div>
 
     <div class="section wrap">
-      <RevealBlock as="h2" class="title">
+      <RevealBlock as="p" class="readout">{{ SECTION_READOUT.works }}</RevealBlock>
+
+      <RevealBlock :as="heading" class="title">
         <span id="works-title">{{ WORKS_SECTION.title }}</span>
       </RevealBlock>
 

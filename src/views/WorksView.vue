@@ -6,7 +6,7 @@ import { OFFICIAL_LINKS } from '@/content/works'
 
 <template>
   <main id="main">
-    <SectionWorks />
+    <SectionWorks heading="h1" />
 
     <section class="section wrap links" aria-labelledby="links-title">
       <h2 id="links-title" class="title">在哪看</h2>
